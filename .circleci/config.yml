@@ -1,16 +1,23 @@
 version: 2.1
 orbs:
   aws-ecr: circleci/aws-ecr@6.8.2
+  aws-ecs: circleci/aws-ecs@1.1.0
 workflows:
   build_and_push_image:
     jobs:
       - aws-ecr/build-and-push-image:
-          name: Build Docker image
           create-repo: true
-          path: ./docker
+          dockerfile: ./docker/Dockerfile
           repo: $CIRCLE_PROJECT_REPONAME-nginx
           tag: 'latest,$CIRCLE_SHA1'
           filters:
             branches:
               only:
                 - master
+      - aws-ecs/deploy-service-update:
+          requires:
+            - aws-ecr/build-and-push-image
+          family: $CIRCLE_PROJECT_REPONAME-task
+          cluster-name: $CIRCLE_PROJECT_REPONAME-cluster
+          service-name: $CIRCLE_PROJECT_REPONAME-service
+          container-image-name-updates: 'container=nginx,tag=${CIRCLE_SHA1}'
