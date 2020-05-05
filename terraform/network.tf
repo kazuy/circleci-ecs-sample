@@ -24,3 +24,34 @@ resource "aws_subnet" "ecs-service-1c" {
     Name = "CircleCI ECS Sample Subnet 1c created by terraform"
   }
 }
+
+# Internet Gateway
+resource "aws_internet_gateway" "ecs-gateway" {
+  vpc_id = aws_vpc.circleci-ecs-sample.id
+  tags = {
+    Name = "CircleCI ECS Sample Internet Gateway created by terraform"
+  }
+}
+
+# Route Tables
+resource "aws_route_table" "ecs-route-table" {
+  vpc_id = aws_vpc.circleci-ecs-sample.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.ecs-gateway.id
+  }
+  tags = {
+    Name = "CircleCI ECS Sample Route Table created by terraform"
+  }
+}
+
+# Route Table Associations
+resource "aws_route_table_association" "ecs-route-association-1a" {
+  subnet_id      = aws_subnet.ecs-service-1a.id
+  route_table_id = aws_route_table.ecs-route-table.id
+}
+
+resource "aws_route_table_association" "ecs-route-association-1c" {
+  subnet_id      = aws_subnet.ecs-service-1c.id
+  route_table_id = aws_route_table.ecs-route-table.id
+}
